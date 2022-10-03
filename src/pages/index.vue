@@ -18,9 +18,9 @@
     </h1>
     <h2>Roles</h2>
     <ul>
-      <li v-if="owner == account">Class Admin</li>
-      <li v-if="classAdmin">Class Admin</li>
-      <li v-if="minterRole">Minter Role</li>
+      <li :class="owner == account ? 'green' : 'red'">Owner</li>
+      <li :class="classAdmin ? 'green' : 'red'">Class Admin</li>
+      <li :class="minterRole ? 'green' : 'red'">Minter Role</li>
     </ul>
     <button v-if="!account" class="bg-green-600 p-4" @click="connectWallet">
       Connect Wallet
@@ -51,8 +51,11 @@
       </h3>
     </div>
     <div v-for="(classDetails, idx) in classesDetails" :key="idx" class="border shadow text-left flex flex-col m-auto " :class="{'mt-4': idx > 1}">
-      <h1>{{idx}}</h1>
-      <pre class="font-semibold">{{ JSON.parse(classDetails.property) }}</pre>
+      <h1 class="ma-1">Class: {{classDetails.class}} - Property: {{classDetails.property_index}}</h1>
+      <button v-if="classDetails.show" class="bg-green-600 p-4" width="50px" @click="classDetails.show = !classDetails.show">Edit</button>
+      <button v-else class="bg-yellow-600 p-4" width="50px" @click="classDetails.show = !classDetails.show">Save</button>
+      <pre v-if="classDetails.show" class="font-semibold">{{ JSON.parse(classDetails.property_detail) }}</pre>
+      <textarea v-else name="property" id="" rows="10" cols="150">{{ JSON.parse(classDetails.property_detail) }}</textarea>
     </div>
   </div>
 </template>
@@ -60,6 +63,14 @@
 <style>
   pre {
     white-space: pre-wrap;
+  }
+
+  .red {
+    color: red !important;
+  }
+
+  .green {
+    color: greenyellow !important;
   }
 </style>
   

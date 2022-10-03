@@ -1,4 +1,4 @@
-import { advancePositionWithClone } from '@vue/compiler-core'
+import { should } from 'chai'
 import { ethers } from 'ethers'
 import { acceptHMRUpdate, defineStore  } from 'pinia'
 import contractABI from '../../artifacts/contracts/ArtefinNFT.sol/ArtefinNFT.json'
@@ -36,7 +36,10 @@ export const useCryptoStore = defineStore('user', () => {
             const properties = await artefinContract.getClassProperties(i)
             for (let j = 0; j < properties.length; j++){
               classesCleaned.push({
-                property: properties[j]
+                class: i,
+                property_index: j,
+                property_detail: properties[j],
+                show: true
               })
             }
           }
