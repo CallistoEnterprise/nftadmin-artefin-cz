@@ -1,16 +1,14 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { useCryptoStore } from '~/store/crypto'
 
-  import { storeToRefs } from 'pinia'
-  import { useCryptoStore } from '~/store/crypto'
-  
-  const property = ref(null as any)
-  const feeLevel = ref(null as any)
-  const cryptoStore = useCryptoStore()
-  const { createNewClass, connectWallet } = useCryptoStore()
-  const { account, classAdmin, classesDetails, classesCount, minterRole, owner } = storeToRefs(cryptoStore)
-  
+const property = ref(null as any)
+const feeLevel = ref(null as any)
+const cryptoStore = useCryptoStore()
+const { createNewClass, connectWallet, modifyClass } = useCryptoStore()
+const { account, classAdmin, classesDetails, classesCount, minterRole, owner } = storeToRefs(cryptoStore)
 </script>
-  
+
 <template>
   <div class="flex flex-col items-center">
     <h1 class="text-2xl m-4">
@@ -18,9 +16,15 @@
     </h1>
     <h2>Roles</h2>
     <ul>
-      <li :class="owner == account ? 'green' : 'red'">Owner</li>
-      <li :class="classAdmin ? 'green' : 'red'">Class Admin</li>
-      <li :class="minterRole ? 'green' : 'red'">Minter Role</li>
+      <li :class="owner === account ? 'green' : 'red'">
+        Owner
+      </li>
+      <li :class="classAdmin ? 'green' : 'red'">
+        Class Admin
+      </li>
+      <li :class="minterRole ? 'green' : 'red'">
+        Minter Role
+      </li>
     </ul>
     <button v-if="!account" class="bg-green-600 p-4" @click="connectWallet">
       Connect Wallet
@@ -50,12 +54,18 @@
         Number Of Classes: {{ classesCount }}
       </h3>
     </div>
-    <div v-for="(classDetails, idx) in classesDetails" :key="idx" class="border shadow text-left flex flex-col m-auto " :class="{'mt-4': idx > 1}">
-      <h1 class="ma-1">Class: {{classDetails.class}} - Property: {{classDetails.property_index}}</h1>
-      <button v-if="classDetails.show" class="bg-green-600 p-4" width="50px" @click="classDetails.show = !classDetails.show">Edit</button>
-      <button v-else class="bg-yellow-600 p-4" width="50px" @click="classDetails.show = !classDetails.show">Save</button>
+    <div v-for="(classDetails, idx) in classesDetails" :key="idx" class="border shadow text-left flex flex-col m-auto " :class="{ 'mt-4': idx > 1 }">
+      <h1 class="ma-1">
+        Class: {{ classDetails.class }} - Property: {{ classDetails.property_index }}
+      </h1>
+      <button v-if="classDetails.show" class="bg-green-600 p-4" width="50px" @click="classDetails.show = !classDetails.show">
+        Edit
+      </button>
+      <button v-else class="bg-yellow-600 p-4" width="50px" @click="modifyClass(classDetails.class, classDetails.property_index, classDetails.property_detail)">
+        Save
+      </button>
       <pre v-if="classDetails.show" class="font-semibold">{{ JSON.parse(classDetails.property_detail) }}</pre>
-      <textarea v-else name="property" id="" rows="10" cols="150">{{ JSON.parse(classDetails.property_detail) }}</textarea>
+      <textarea v-else v-model="classDetails.property_detail" name="property" rows="10" cols="150" />
     </div>
   </div>
 </template>
@@ -73,7 +83,7 @@
     color: greenyellow !important;
   }
 </style>
-  
+
 <route lang="yaml">
 meta:
   layout: home
