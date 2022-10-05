@@ -58,12 +58,17 @@ const { account, classAdmin, classesDetails, classesCount, minterRole, owner } =
       <h1 class="ma-1">
         Class: {{ classDetails.class }} - Property: {{ classDetails.property_index }}
       </h1>
-      <button v-if="classDetails.show" class="bg-green-600 p-4" width="50px" @click="classDetails.show = !classDetails.show">
+      <button v-if="classDetails.show" class="bg-green-600 p-4" @click="classDetails.show = !classDetails.show">
         Edit
       </button>
-      <button v-else class="bg-yellow-600 p-4" width="50px" @click="modifyClass(classDetails.class, classDetails.property_index, classDetails.property_detail)">
-        Save
-      </button>
+      <div v-else>
+        <button class="bg-yellow-600 p-4" @click="modifyClass(classDetails.class, classDetails.property_index, classDetails.property_detail)">
+          Save
+        </button>
+        <button class="bg-red-600 p-4" @click="classDetails.show = !classDetails.show">
+          Cancel
+        </button>
+      </div>
       <pre v-if="classDetails.show" class="font-semibold">{{ JSON.parse(classDetails.property_detail) }}</pre>
       <textarea v-else v-model="classDetails.property_detail" name="property" rows="10" cols="150" />
     </div>
