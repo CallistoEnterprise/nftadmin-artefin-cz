@@ -7,9 +7,10 @@ const contractAddress = '0x9557f57556e4F21623D078625d1dc059A72B8ca3'
 
 export const useCryptoStore = defineStore('user', () => {
   const account = ref(null)
+  const chainID = ref()
   const classAdmin = ref(null)
   const minterRole = ref(null)
-  const owner = ref(null)
+  const owner = ref(false)
   const loading = ref(false)
   const classesCount = ref(0)
   const classesDetails = ref([] as any)
@@ -128,7 +129,7 @@ export const useCryptoStore = defineStore('user', () => {
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         classAdmin.value = await artefinContract.classAdmins(address)
-        owner.value = await artefinContract.owner()
+        owner.value = address.toUpperCase() === (await artefinContract.owner()).toUpperCase()
         minterRole.value = await artefinContract.minter_role(address)
       }
       else {
@@ -148,14 +149,51 @@ export const useCryptoStore = defineStore('user', () => {
         return
       }
       const myAccounts = await ethereum.request({ method: 'eth_requestAccounts' })
-
+      const provider = new ethers.providers.Web3Provider(ethereum)
+      chainID.value = (await provider.getNetwork()).chainId
       console.log('Connected: ', myAccounts[0])
+      await getRoles(myAccounts[0])
       account.value = myAccounts[0]
       await getAllClasses()
-      await getRoles(myAccounts[0])
     }
     catch (error) {
       console.log(error)
+    }
+  }
+
+  async function switchChain() {
+    try {
+      const { ethereum } = window
+      await ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x334' }],
+      })
+    }
+    catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask.
+      if (switchError.code === 4902) {
+        try {
+          const { ethereum } = window
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x334',
+              chainName: 'Callisto',
+              nativeCurrency: {
+                name: 'Callisto',
+                symbol: 'CLO',
+                decimals: 18,
+              },
+              rpcUrls: ['https://rpc.callisto.network/'],
+              blockExplorerUrls: ['https://explorer.callisto.network/'],
+            }],
+          })
+        }
+        catch (addError) {
+          // handle "add" error
+        }
+      }
+      // handle other "switch" errors
     }
   }
 
@@ -165,12 +203,14 @@ export const useCryptoStore = defineStore('user', () => {
     createNewClass,
     modifyClass,
     connectWallet,
+    switchChain,
     account,
     classAdmin,
     minterRole,
     owner,
     classesCount,
     classesDetails,
+    chainID,
   }
 })
 
