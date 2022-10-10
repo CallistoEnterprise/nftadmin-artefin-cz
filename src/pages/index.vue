@@ -3,12 +3,12 @@ import { storeToRefs } from 'pinia'
 import { useCryptoStore } from '~/store/crypto'
 
 const cryptoStore = useCryptoStore()
-const { connectWallet, switchChain, getRoles } = useCryptoStore()
+const { connectWallet, switchChain } = useCryptoStore()
 const { account, classAdmin, minterRole, owner, chainID } = storeToRefs(cryptoStore)
 
 onBeforeMount(() => {
   window.ethereum.on('accountsChanged', async () => {
-    getRoles()
+    connectWallet()
   })
 })
 </script>
@@ -57,6 +57,11 @@ onBeforeMount(() => {
   .noRoles {
     color: white;
     border: 2px red solid;
+  }
+
+  .section{
+    border: 2px red solid;
+    width: 100%;
   }
 </style>
 

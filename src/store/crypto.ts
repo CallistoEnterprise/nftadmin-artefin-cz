@@ -89,6 +89,34 @@ export const useCryptoStore = defineStore('user', () => {
     }
   }
 
+  async function manageClassAdmin(_address: string, _enable: string) {
+    console.log('setting loader')
+    setLoader(true)
+    try {
+      if (ethereum) {
+      // create provider object from ethers library, using ethereum object injected by metamask
+
+        const signer = provider.getSigner()
+        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
+        const addClassTxn = await artefinContract.classAdmin(_address, _enable)
+        console.log('Mining...', addClassTxn.hash)
+        await addClassTxn.wait()
+        console.log('Mined -- ', addClassTxn.hash)
+
+        _address = ''
+        _enable = ''
+        setLoader(false)
+      }
+      else {
+        console.log('Ethereum object doesn\'t exist!')
+      }
+    }
+    catch (error) {
+      setLoader(false)
+      console.log(error)
+    }
+  }
+
   async function modifyClass(_classID: number, _propertyID: number, _property: string) {
     console.log('setting loader')
     setLoader(true)
@@ -119,17 +147,44 @@ export const useCryptoStore = defineStore('user', () => {
     }
   }
 
+  async function addProperty(_classID: number, _property: string) {
+    console.log('setting loader')
+    setLoader(true)
+    try {
+      if (ethereum) {
+      // create provider object from ethers library, using ethereum object injected by metamask
+
+        const signer = provider.getSigner()
+        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
+        const addClassTxn = await artefinContract.addClassPropertyWithContent(_classID, _property)
+        console.log('Mining...', addClassTxn.hash)
+        await addClassTxn.wait()
+        console.log('Mined -- ', addClassTxn.hash)
+
+        await getAllClasses()
+        _classID = 0
+        _property = ''
+        setLoader(false)
+      }
+      else {
+        console.log('Ethereum object doesn\'t exist!')
+      }
+    }
+    catch (error) {
+      setLoader(false)
+      console.log(error)
+    }
+  }
+
   async function getRoles() {
     try {
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const myAccounts = await ethereum.request({ method: 'eth_requestAccounts' })
-        const address = myAccounts[0]
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
-        classAdmin.value = await artefinContract.classAdmins(address)
-        owner.value = address.toUpperCase() === (await artefinContract.owner()).toUpperCase()
-        minterRole.value = await artefinContract.minter_role(address)
+        classAdmin.value = await artefinContract.classAdmins(account.value)
+        owner.value = (account.value).toUpperCase() === (await artefinContract.owner()).toUpperCase()
+        minterRole.value = await artefinContract.minter_role(account.value)
       }
       else {
         console.log('Ethereum object doesn\'t exist!')
@@ -150,8 +205,9 @@ export const useCryptoStore = defineStore('user', () => {
 
       chainID.value = (await provider.getNetwork()).chainId === 20729
       console.log('Connected: ', myAccounts[0])
-      await getRoles(myAccounts[0])
       account.value = myAccounts[0]
+      await getRoles()
+
       await getAllClasses()
     }
     catch (error) {
@@ -200,7 +256,8 @@ export const useCryptoStore = defineStore('user', () => {
     modifyClass,
     connectWallet,
     switchChain,
-    getRoles,
+    manageClassAdmin,
+    addProperty,
     account,
     classAdmin,
     minterRole,
