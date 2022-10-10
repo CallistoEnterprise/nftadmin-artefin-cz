@@ -6,12 +6,12 @@ const property = ref(null as any)
 const feeLevel = ref(null as any)
 const cryptoStore = useCryptoStore()
 const { createNewClass, modifyClass } = useCryptoStore()
-const { account, classesDetails, classesCount, chainID } = storeToRefs(cryptoStore)
+const { classesDetails, classesCount } = storeToRefs(cryptoStore)
 </script>
 
 <template>
   <div>
-    <div v-if="account && chainID === 20729" class="mt-5">
+    <div class="mt-5">
       <input
         v-model="feeLevel"
         name="feeLevel"
@@ -32,7 +32,7 @@ const { account, classesDetails, classesCount, chainID } = storeToRefs(cryptoSto
     </div>
 
     <div>
-      <div v-if="account && chainID === 20729" class="border shadow p-4 mt-10">
+      <div class="border shadow p-4 mt-10">
         <h3 class="text-2xl">
           Number Of Classes: {{ classesCount }}
         </h3>

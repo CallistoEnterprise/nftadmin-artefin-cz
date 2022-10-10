@@ -14,6 +14,8 @@ export const useCryptoStore = defineStore('user', () => {
   const loading = ref(false)
   const classesCount = ref(0)
   const classesDetails = ref([] as any)
+  const { ethereum } = window
+  const provider = new ethers.providers.Web3Provider(ethereum)
 
   function setLoader(value: boolean) {
     console.log('setloader', value)
@@ -23,9 +25,8 @@ export const useCryptoStore = defineStore('user', () => {
   async function getAllClasses() {
     try {
       setLoader(true)
-      const { ethereum } = window
+
       if (ethereum) {
-        const provider = new ethers.providers.Web3Provider(ethereum)
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
 
@@ -63,10 +64,9 @@ export const useCryptoStore = defineStore('user', () => {
     console.log('setting loader')
     setLoader(true)
     try {
-      const { ethereum } = window
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const provider = new ethers.providers.Web3Provider(ethereum)
+
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.addNewTokenClass(_feeLevel, _property)
@@ -93,10 +93,9 @@ export const useCryptoStore = defineStore('user', () => {
     console.log('setting loader')
     setLoader(true)
     try {
-      const { ethereum } = window
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const provider = new ethers.providers.Web3Provider(ethereum)
+
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.modifyClassProperty(_classID, _propertyID, _property)
@@ -120,12 +119,12 @@ export const useCryptoStore = defineStore('user', () => {
     }
   }
 
-  async function getRoles(address: string) {
+  async function getRoles() {
     try {
-      const { ethereum } = window
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const provider = new ethers.providers.Web3Provider(ethereum)
+        const myAccounts = await ethereum.request({ method: 'eth_requestAccounts' })
+        const address = myAccounts[0]
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         classAdmin.value = await artefinContract.classAdmins(address)
@@ -143,14 +142,13 @@ export const useCryptoStore = defineStore('user', () => {
 
   async function connectWallet() {
     try {
-      const { ethereum } = window
       if (!ethereum) {
         alert('Must connect to MetaMask!')
         return
       }
       const myAccounts = await ethereum.request({ method: 'eth_requestAccounts' })
-      const provider = new ethers.providers.Web3Provider(ethereum)
-      chainID.value = (await provider.getNetwork()).chainId
+
+      chainID.value = (await provider.getNetwork()).chainId === 20729
       console.log('Connected: ', myAccounts[0])
       await getRoles(myAccounts[0])
       account.value = myAccounts[0]
@@ -163,7 +161,6 @@ export const useCryptoStore = defineStore('user', () => {
 
   async function switchChain() {
     try {
-      const { ethereum } = window
       await ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x334' }],
@@ -173,7 +170,6 @@ export const useCryptoStore = defineStore('user', () => {
       // This error code indicates that the chain has not been added to MetaMask.
       if (switchError.code === 4902) {
         try {
-          const { ethereum } = window
           await ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [{
@@ -204,6 +200,7 @@ export const useCryptoStore = defineStore('user', () => {
     modifyClass,
     connectWallet,
     switchChain,
+    getRoles,
     account,
     classAdmin,
     minterRole,
