@@ -9,6 +9,8 @@ export const useCryptoStore = defineStore('user', () => {
   const account = ref(null)
   const chainID = ref()
   const classAdmin = ref(null)
+  const classAdminQuery = ref(false)
+  const minterRoleQuery = ref(false)
   const minterRole = ref(null)
   const owner = ref(false)
   const loading = ref(false)
@@ -16,6 +18,8 @@ export const useCryptoStore = defineStore('user', () => {
   const classesDetails = ref([] as any)
   const { ethereum } = window
   const provider = new ethers.providers.Web3Provider(ethereum)
+  const signer = provider.getSigner()
+  const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
 
   function setLoader(value: boolean) {
     console.log('setloader', value)
@@ -27,9 +31,6 @@ export const useCryptoStore = defineStore('user', () => {
       setLoader(true)
 
       if (ethereum) {
-        const signer = provider.getSigner()
-        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
-
         const count = (await artefinContract.nextClassIndex()).toNumber()
         classesCount.value = count
         console.log('Retrieved total classes count...', count)
@@ -65,10 +66,6 @@ export const useCryptoStore = defineStore('user', () => {
     setLoader(true)
     try {
       if (ethereum) {
-      // create provider object from ethers library, using ethereum object injected by metamask
-
-        const signer = provider.getSigner()
-        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.addNewTokenClass(_feeLevel, _property)
         console.log('Mining...', addClassTxn.hash)
         await addClassTxn.wait()
@@ -89,22 +86,42 @@ export const useCryptoStore = defineStore('user', () => {
     }
   }
 
-  async function manageClassAdmin(_address: string, _enable: string) {
+  async function manageClassAdmin(_address: string, _enable: boolean) {
     console.log('setting loader')
     setLoader(true)
     try {
       if (ethereum) {
-      // create provider object from ethers library, using ethereum object injected by metamask
-
-        const signer = provider.getSigner()
-        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.classAdmin(_address, _enable)
         console.log('Mining...', addClassTxn.hash)
         await addClassTxn.wait()
         console.log('Mined -- ', addClassTxn.hash)
 
         _address = ''
-        _enable = ''
+        _enable = false
+        setLoader(false)
+      }
+      else {
+        console.log('Ethereum object doesn\'t exist!')
+      }
+    }
+    catch (error) {
+      setLoader(false)
+      console.log(error)
+    }
+  }
+
+  async function manageMinterRoles(_address: string, _enable: boolean) {
+    console.log('setting loader')
+    setLoader(true)
+    try {
+      if (ethereum) {
+        const addClassTxn = await artefinContract.setMinterRole(_address, _enable)
+        console.log('Mining...', addClassTxn.hash)
+        await addClassTxn.wait()
+        console.log('Mined -- ', addClassTxn.hash)
+
+        _address = ''
+        _enable = false
         setLoader(false)
       }
       else {
@@ -122,10 +139,6 @@ export const useCryptoStore = defineStore('user', () => {
     setLoader(true)
     try {
       if (ethereum) {
-      // create provider object from ethers library, using ethereum object injected by metamask
-
-        const signer = provider.getSigner()
-        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.modifyClassProperty(_classID, _propertyID, _property)
         console.log('Mining...', addClassTxn.hash)
         await addClassTxn.wait()
@@ -152,10 +165,6 @@ export const useCryptoStore = defineStore('user', () => {
     setLoader(true)
     try {
       if (ethereum) {
-      // create provider object from ethers library, using ethereum object injected by metamask
-
-        const signer = provider.getSigner()
-        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.addClassPropertyWithContent(_classID, _property)
         console.log('Mining...', addClassTxn.hash)
         await addClassTxn.wait()
@@ -179,9 +188,6 @@ export const useCryptoStore = defineStore('user', () => {
   async function getRoles() {
     try {
       if (ethereum) {
-      // create provider object from ethers library, using ethereum object injected by metamask
-        const signer = provider.getSigner()
-        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         classAdmin.value = await artefinContract.classAdmins(account.value)
         owner.value = (account.value).toUpperCase() === (await artefinContract.owner()).toUpperCase()
         minterRole.value = await artefinContract.minter_role(account.value)
@@ -189,6 +195,30 @@ export const useCryptoStore = defineStore('user', () => {
       else {
         console.log('Ethereum object doesn\'t exist!')
       }
+    }
+    catch (error) {
+      console.log(error)
+    }
+  }
+
+  async function isAdmin(address: string) {
+    try {
+      if (ethereum)
+        classAdminQuery.value = await artefinContract.classAdmins(address)
+
+      else console.log('Ethereum object doesn\'t exist!')
+    }
+    catch (error) {
+      console.log(error)
+    }
+  }
+
+  async function isMinter(address: string) {
+    try {
+      if (ethereum)
+        minterRoleQuery.value = await artefinContract.minter_role(address)
+
+      else console.log('Ethereum object doesn\'t exist!')
     }
     catch (error) {
       console.log(error)
@@ -258,6 +288,9 @@ export const useCryptoStore = defineStore('user', () => {
     switchChain,
     manageClassAdmin,
     addProperty,
+    isAdmin,
+    manageMinterRoles,
+    isMinter,
     account,
     classAdmin,
     minterRole,
@@ -265,6 +298,8 @@ export const useCryptoStore = defineStore('user', () => {
     classesCount,
     classesDetails,
     chainID,
+    classAdminQuery,
+    minterRoleQuery,
   }
 })
 
