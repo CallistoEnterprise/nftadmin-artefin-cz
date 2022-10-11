@@ -38,7 +38,9 @@ onBeforeMount(() => {
     <button v-if="!chainID && account" class="bg-green-600 p-4" @click="switchChain">
       Change Network
     </button>
-    <RolesManagement />
+    <RolesManagement
+      v-if="owner"
+    />
     <ClassesManagement
       v-if="classAdmin"
     />
