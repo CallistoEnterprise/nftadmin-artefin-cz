@@ -1,15 +1,15 @@
-require("@nomicfoundation/hardhat-toolbox");
+require('@nomicfoundation/hardhat-toolbox')
 require('dotenv').config()
 
-const CALLISTO_PRIVATE_KEY = process.env.CALLISTO_PRIVATE_KEY;
+const CALLISTO_PRIVATE_KEY = process.env.CALLISTO_PRIVATE_KEY
 
 module.exports = {
   solidity: {
-    version: "0.8.17",
+    version: '0.8.17',
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1000
+        runs: 1000,
       },
     },
   },
@@ -18,12 +18,12 @@ module.exports = {
   },
   networks: {
     testnet: {
-      url: `https://testnet-rpc.callisto.network`,
-      accounts: [`${CALLISTO_PRIVATE_KEY}`]
+      url: 'https://testnet-rpc.callisto.network',
+      accounts: [`${CALLISTO_PRIVATE_KEY}`],
     },
     mainnet: {
-      url: `https://rpc.callisto.network/`,
-      accounts: [`${CALLISTO_PRIVATE_KEY}`]
-    }
-  }
+      url: 'https://rpc.callisto.network/',
+      accounts: [`${CALLISTO_PRIVATE_KEY}`],
+    },
+  },
 }

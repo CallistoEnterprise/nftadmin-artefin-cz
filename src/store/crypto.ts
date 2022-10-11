@@ -7,12 +7,15 @@ const contractAddress = '0x9557f57556e4F21623D078625d1dc059A72B8ca3'
 
 export const useCryptoStore = defineStore('user', () => {
   const account = ref(null)
+  const chainID = ref()
   const classAdmin = ref(null)
   const minterRole = ref(null)
-  const owner = ref(null)
+  const owner = ref(false)
   const loading = ref(false)
   const classesCount = ref(0)
   const classesDetails = ref([] as any)
+  const { ethereum } = window
+  const provider = new ethers.providers.Web3Provider(ethereum)
 
   function setLoader(value: boolean) {
     console.log('setloader', value)
@@ -22,9 +25,8 @@ export const useCryptoStore = defineStore('user', () => {
   async function getAllClasses() {
     try {
       setLoader(true)
-      const { ethereum } = window
+
       if (ethereum) {
-        const provider = new ethers.providers.Web3Provider(ethereum)
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
 
@@ -62,10 +64,9 @@ export const useCryptoStore = defineStore('user', () => {
     console.log('setting loader')
     setLoader(true)
     try {
-      const { ethereum } = window
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const provider = new ethers.providers.Web3Provider(ethereum)
+
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.addNewTokenClass(_feeLevel, _property)
@@ -88,14 +89,41 @@ export const useCryptoStore = defineStore('user', () => {
     }
   }
 
+  async function manageClassAdmin(_address: string, _enable: string) {
+    console.log('setting loader')
+    setLoader(true)
+    try {
+      if (ethereum) {
+      // create provider object from ethers library, using ethereum object injected by metamask
+
+        const signer = provider.getSigner()
+        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
+        const addClassTxn = await artefinContract.classAdmin(_address, _enable)
+        console.log('Mining...', addClassTxn.hash)
+        await addClassTxn.wait()
+        console.log('Mined -- ', addClassTxn.hash)
+
+        _address = ''
+        _enable = ''
+        setLoader(false)
+      }
+      else {
+        console.log('Ethereum object doesn\'t exist!')
+      }
+    }
+    catch (error) {
+      setLoader(false)
+      console.log(error)
+    }
+  }
+
   async function modifyClass(_classID: number, _propertyID: number, _property: string) {
     console.log('setting loader')
     setLoader(true)
     try {
-      const { ethereum } = window
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const provider = new ethers.providers.Web3Provider(ethereum)
+
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
         const addClassTxn = await artefinContract.modifyClassProperty(_classID, _propertyID, _property)
@@ -119,17 +147,44 @@ export const useCryptoStore = defineStore('user', () => {
     }
   }
 
-  async function getRoles(address: string) {
+  async function addProperty(_classID: number, _property: string) {
+    console.log('setting loader')
+    setLoader(true)
     try {
-      const { ethereum } = window
       if (ethereum) {
       // create provider object from ethers library, using ethereum object injected by metamask
-        const provider = new ethers.providers.Web3Provider(ethereum)
+
         const signer = provider.getSigner()
         const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
-        classAdmin.value = await artefinContract.classAdmins(address)
-        owner.value = await artefinContract.owner()
-        minterRole.value = await artefinContract.minter_role(address)
+        const addClassTxn = await artefinContract.addClassPropertyWithContent(_classID, _property)
+        console.log('Mining...', addClassTxn.hash)
+        await addClassTxn.wait()
+        console.log('Mined -- ', addClassTxn.hash)
+
+        await getAllClasses()
+        _classID = 0
+        _property = ''
+        setLoader(false)
+      }
+      else {
+        console.log('Ethereum object doesn\'t exist!')
+      }
+    }
+    catch (error) {
+      setLoader(false)
+      console.log(error)
+    }
+  }
+
+  async function getRoles() {
+    try {
+      if (ethereum) {
+      // create provider object from ethers library, using ethereum object injected by metamask
+        const signer = provider.getSigner()
+        const artefinContract = new ethers.Contract(contractAddress, contractABI.abi, signer)
+        classAdmin.value = await artefinContract.classAdmins(account.value)
+        owner.value = (account.value).toUpperCase() === (await artefinContract.owner()).toUpperCase()
+        minterRole.value = await artefinContract.minter_role(account.value)
       }
       else {
         console.log('Ethereum object doesn\'t exist!')
@@ -142,20 +197,55 @@ export const useCryptoStore = defineStore('user', () => {
 
   async function connectWallet() {
     try {
-      const { ethereum } = window
       if (!ethereum) {
         alert('Must connect to MetaMask!')
         return
       }
       const myAccounts = await ethereum.request({ method: 'eth_requestAccounts' })
 
+      chainID.value = (await provider.getNetwork()).chainId === 20729
       console.log('Connected: ', myAccounts[0])
       account.value = myAccounts[0]
+      await getRoles()
+
       await getAllClasses()
-      await getRoles(myAccounts[0])
     }
     catch (error) {
       console.log(error)
+    }
+  }
+
+  async function switchChain() {
+    try {
+      await ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x334' }],
+      })
+    }
+    catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask.
+      if (switchError.code === 4902) {
+        try {
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x334',
+              chainName: 'Callisto',
+              nativeCurrency: {
+                name: 'Callisto',
+                symbol: 'CLO',
+                decimals: 18,
+              },
+              rpcUrls: ['https://rpc.callisto.network/'],
+              blockExplorerUrls: ['https://explorer.callisto.network/'],
+            }],
+          })
+        }
+        catch (addError) {
+          // handle "add" error
+        }
+      }
+      // handle other "switch" errors
     }
   }
 
@@ -165,12 +255,16 @@ export const useCryptoStore = defineStore('user', () => {
     createNewClass,
     modifyClass,
     connectWallet,
+    switchChain,
+    manageClassAdmin,
+    addProperty,
     account,
     classAdmin,
     minterRole,
     owner,
     classesCount,
     classesDetails,
+    chainID,
   }
 })
 
