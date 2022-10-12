@@ -8,10 +8,10 @@ const contractAddress = '0x9557f57556e4F21623D078625d1dc059A72B8ca3'
 export const useCryptoStore = defineStore('user', () => {
   const account = ref(null)
   const chainID = ref()
-  const classAdmin = ref(null)
+  const classAdmin = ref(false)
   const classAdminQuery = ref(false)
   const minterRoleQuery = ref(false)
-  const minterRole = ref(null)
+  const minterRole = ref(false)
   const owner = ref(false)
   const loading = ref(false)
   const classesCount = ref(0)
@@ -188,9 +188,11 @@ export const useCryptoStore = defineStore('user', () => {
   async function getRoles() {
     try {
       if (ethereum) {
-        classAdmin.value = await artefinContract.classAdmins(account.value)
-        owner.value = (account.value).toUpperCase() === (await artefinContract.owner()).toUpperCase()
-        minterRole.value = await artefinContract.minter_role(account.value)
+        const address = (await ethereum.request({ method: 'eth_requestAccounts' }))[0]
+        classAdmin.value = await artefinContract.classAdmins(address)
+        owner.value = (address).toUpperCase() === (await artefinContract.owner()).toUpperCase()
+        minterRole.value = await artefinContract.minter_role(address)
+        account.value = address
       }
       else {
         console.log('Ethereum object doesn\'t exist!')
@@ -199,6 +201,14 @@ export const useCryptoStore = defineStore('user', () => {
     catch (error) {
       console.log(error)
     }
+  }
+
+  async function getChain() {
+    await provider.getNetwork()
+      .then((res) => {
+        chainID.value = res.chainId === 20729
+      })
+      .catch(console.log)
   }
 
   async function isAdmin(address: string) {
@@ -231,14 +241,12 @@ export const useCryptoStore = defineStore('user', () => {
         alert('Must connect to MetaMask!')
         return
       }
-      const myAccounts = await ethereum.request({ method: 'eth_requestAccounts' })
-
-      chainID.value = (await provider.getNetwork()).chainId === 20729
-      console.log('Connected: ', myAccounts[0])
-      account.value = myAccounts[0]
-      await getRoles()
-
-      await getAllClasses()
+      await getChain()
+      if (chainID.value) {
+        await getRoles()
+        console.log('Connected: ', account.value)
+        await getAllClasses()
+      }
     }
     catch (error) {
       console.log(error)
@@ -291,6 +299,8 @@ export const useCryptoStore = defineStore('user', () => {
     isAdmin,
     manageMinterRoles,
     isMinter,
+    getRoles,
+    getChain,
     account,
     classAdmin,
     minterRole,
