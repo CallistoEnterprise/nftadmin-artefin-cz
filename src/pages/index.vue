@@ -3,13 +3,21 @@ import { storeToRefs } from 'pinia'
 import { useCryptoStore } from '~/store/crypto'
 
 const cryptoStore = useCryptoStore()
-const { connectWallet, switchChain } = useCryptoStore()
+const { connectWallet, switchChain, getRoles, getChain } = useCryptoStore()
 const { account, classAdmin, minterRole, owner, chainID } = storeToRefs(cryptoStore)
 
 onBeforeMount(() => {
-  window.ethereum.on('accountsChanged', async () => {
-    connectWallet()
-  })
+  getChain()
+})
+
+onMounted(() => {
+  window.ethereum
+    .on('accountsChanged', async () => {
+      await getRoles()
+    })
+    .on('chainChanged', async () => {
+      location.reload()
+    })
 })
 </script>
 
@@ -32,10 +40,10 @@ onBeforeMount(() => {
         <p>Please, try another account.</p>
       </div>
     </div>
-    <button v-if="!account" class="bg-green-600 p-4" @click="connectWallet">
+    <button v-if="!account && chainID" class="bg-green-600 p-4" @click="connectWallet">
       Connect Wallet
     </button>
-    <button v-if="!chainID && account" class="bg-green-600 p-4" @click="switchChain">
+    <button v-if="!chainID" class="bg-green-600 p-4" @click="switchChain">
       Change Network
     </button>
     <RolesManagement
