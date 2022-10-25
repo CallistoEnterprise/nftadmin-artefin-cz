@@ -3,8 +3,8 @@
 import { ethers } from 'ethers'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import contractABI from '../../artifacts/contracts/ArtefinNFT.sol/ArtefinNFT.json'
-// const contractAddress = '0x69c878B44fb427cd084125Ce3b76a8Ee4685E78c'
-const contractAddress = '0xB1651e9c2499657e8e0939285589f5B4060caC88'
+const contractAddress = '0x69c878B44fb427cd084125Ce3b76a8Ee4685E78c'
+// const contractAddress = '0xB1651e9c2499657e8e0939285589f5B4060caC88'
 export const useCryptoStore = defineStore('user', () => {
   const account = ref(null)
   const chainID = ref()
