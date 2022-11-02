@@ -65,7 +65,6 @@ onMounted(() => {
   }
 
   .noRoles {
-    color: white;
     border: 2px red solid;
   }
 

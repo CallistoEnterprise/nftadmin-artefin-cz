@@ -3,8 +3,8 @@
 import { ethers } from 'ethers'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import contractABI from '../../artifacts/contracts/ArtefinNFT.sol/ArtefinNFT.json'
-const contractAddress = '0x9557f57556e4F21623D078625d1dc059A72B8ca3'
-
+const contractAddress = '0x69c878B44fb427cd084125Ce3b76a8Ee4685E78c'
+// const contractAddress = '0xB1651e9c2499657e8e0939285589f5B4060caC88'
 export const useCryptoStore = defineStore('user', () => {
   const account = ref(null)
   const chainID = ref()
@@ -206,7 +206,8 @@ export const useCryptoStore = defineStore('user', () => {
   async function getChain() {
     await provider.getNetwork()
       .then((res) => {
-        chainID.value = res.chainId === 20729
+        // chainID.value = res.chainId === 20729
+        chainID.value = res.chainId === 820
       })
       .catch(console.log)
   }
