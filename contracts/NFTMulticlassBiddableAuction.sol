@@ -134,7 +134,6 @@ interface NFTInterface {
 contract NFTMulticlassBiddableAuction is ActivatedByOwner, ReentrancyGuard {
 
     event AuctionCreated(uint256 indexed tokenClassAuctionID, uint256 timestamp);
-    //event TokenSold(uint256 indexed tokenID, uint256 indexed tokenClassID, address indexed buyer);
     event NFTContractSet(address indexed newNFTContract, address indexed oldNFTContract);
     event RevenueWithdrawal(uint256 amount);
     event RoundEnd(uint256 indexed tokenClassAuctionID, address indexed winner, uint256 indexed acquiredTokenID);
@@ -208,37 +207,44 @@ contract NFTMulticlassBiddableAuction is ActivatedByOwner, ReentrancyGuard {
     
     function bidOnNFT(uint256 _classID) public payable onlyActive
     {
-
-        uint256 _bid = msg.value;
+        uint256 bid = msg.value;
+        uint256 min_price = auctions[_classID].min_priceInWei;
+        uint256 start = auctions[_classID].start_timestamp;
+        uint256 max_supply = auctions[_classID].max_supply;
+        address payable bidder = payable(msg.sender);
         bool sent;
 
-        require(_bid >= auctions[_classID].min_priceInWei, "Min price criteria is not met");
-        require(auctions[_classID].start_timestamp < block.timestamp, "Auction did not start yet");
-
-        if(auctions[_classID].start_timestamp + auctions[_classID].duration < block.timestamp)
-        {
-            endRound(_classID);
-            sent = payable(msg.sender).send(_bid - auctions[_classID].min_priceInWei);
-            _bid = auctions[_classID].min_priceInWei;
-        }
-
-        require(auctions[_classID].max_supply > auctions[_classID].amount_sold, "All NFTs of this artwork are already sold");
-
+        require(start < block.timestamp, "Auction did not start yet");
+        require(min_price != 0, "Min price is not configured by the owner");
+        require(max_supply > auctions[_classID].amount_sold, "All NFTs of this artwork are already sold");
         require(
-            _bid >= auctions[_classID].highest_bid + auctions[_classID].highest_bid/20 && 
-            _bid >= auctions[_classID].highest_bid + 1e18,
+            bid >= auctions[_classID].highest_bid + auctions[_classID].highest_bid/20,
             "Does not outbid current winner by 5%"
         );
-        require(auctions[_classID].min_priceInWei != 0, "Min price is not configured by the owner");
+        require(bid >= auctions[_classID].highest_bid + 1 ether, "Does not outbid current winner by 1 CLO");
+        require(bid >= min_price, "Min price criteria is not met");
 
-        sent = payable(auctions[_classID].winner).send(auctions[_classID].highest_bid);
+        if(start + auctions[_classID].duration < block.timestamp)
+        {
+            endRound(_classID);
+            if(max_supply > auctions[_classID].amount_sold){
+                sent = bidder.send(bid - min_price);
+                bid = min_price;                
+            }else{
+                sent = bidder.send(bid);
+            }
+        }
 
-        auctions[_classID].winner      = msg.sender;
-        auctions[_classID].highest_bid = _bid;
+        if(auctions[_classID].highest_bid > 0){
+           sent = payable(auctions[_classID].winner).send(auctions[_classID].highest_bid); 
+        }        
+
+        auctions[_classID].winner      = bidder;
+        auctions[_classID].highest_bid = bid;
 
         bids[nextBidIndex].classID = _classID;
-        bids[nextBidIndex].owner = msg.sender;
-        bids[nextBidIndex].bid_amount = _bid;
+        bids[nextBidIndex].owner = bidder;
+        bids[nextBidIndex].bid_amount = bid;
         bids[nextBidIndex].bid_timestamp = block.timestamp;
 
         nextBidIndex++;
