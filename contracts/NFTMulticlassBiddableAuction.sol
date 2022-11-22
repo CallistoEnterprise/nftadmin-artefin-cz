@@ -232,6 +232,8 @@ contract NFTMulticlassBiddableAuction is ActivatedByOwner, ReentrancyGuard {
                 bid = min_price;                
             }else{
                 sent = bidder.send(bid);
+                nextBidIndex++;
+                return;
             }
         }
 
